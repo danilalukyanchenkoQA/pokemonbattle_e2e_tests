@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from selenium import webdriver
 from selenium.webdriver import Chrome
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
 import pytest
 from selenium.webdriver.support.wait import WebDriverWait
 
@@ -25,11 +26,15 @@ from pages.pokemons_list_page import PokemonsListPage
 logger = logging.getLogger(__name__)
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def driver():
-    driver = Chrome()
-    driver.maximize_window()
-    driver.implicitly_wait(2)
+    options = Options()
+    options.add_argument("--headless=new")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--window-size=1920,1080")
+
+    driver = webdriver.Chrome(options=options)
     yield driver
     driver.quit()
 
