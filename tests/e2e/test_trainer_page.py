@@ -98,6 +98,7 @@ class TestTrainers:
     @allure.tag("smoke")
     @allure.tag("payment")
     @allure.tag("critical-path")
+    @pytest.mark.ui
     def test_buy_premium(self, driver, user_login, premium_cleanup):
         # Цепочка страниц
         pokemons_page = PokemonsListPage(driver)
@@ -128,6 +129,7 @@ class TestTrainers:
     @allure.tag("smoke")
     @allure.tag("payment")
     @allure.tag("cleanup")
+    @pytest.mark.ui
     def test_cancel_premium(self, driver, user_login):
         # Цепочка до Premium страницы
         pokemons_page = PokemonsListPage(driver)
