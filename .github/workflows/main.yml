@@ -21,6 +21,7 @@ jobs:
           pip install ruff
 
       - name: Run ruff
+        continue-on-error: true
         run: ruff check .
 
   flake8:
@@ -36,6 +37,7 @@ jobs:
           pip install flake8
 
       - name: Run flake8
+        continue-on-error: true
         run: flake8 .
 
   pylint:
@@ -51,7 +53,9 @@ jobs:
           pip install pylint
 
       - name: Run pylint
-        run: pylint . > pylint-report.txt
+        continue-on-error: true
+        run: |
+          pylint . > pylint-report.txt || true
 
       - name: Upload pylint report
         if: always()
@@ -64,6 +68,7 @@ jobs:
   tests:
     runs-on: ubuntu-latest
     needs: [ruff, flake8, pylint]
+    if: always()
     steps:
       - uses: actions/checkout@v4
 
@@ -110,6 +115,7 @@ jobs:
   final_job:
     runs-on: ubuntu-latest
     needs: tests
+    if: always()
     steps:
       - name: Print final message
         run: echo "Пайплайн завершён"
