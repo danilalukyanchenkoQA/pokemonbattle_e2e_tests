@@ -1,0 +1,125 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  ruff:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    container: python:3.12
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ruff
+        run: |
+          python --version
+          pip install --upgrade pip
+          pip install ruff
+
+      - name: Run ruff
+        run: ruff check .
+
+  flake8:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    container: python:3.12
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install flake8
+        run: |
+          python --version
+          pip install --upgrade pip
+          pip install flake8
+
+      - name: Run flake8
+        run: flake8 .
+
+  pylint:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    container: python:3.12
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pylint
+        run: |
+          python --version
+          pip install --upgrade pip
+          pip install pylint
+
+      - name: Run pylint
+        run: pylint . > pylint-report.txt
+
+      - name: Upload pylint report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pylint-report
+          path: pylint-report.txt
+          retention-days: 7
+
+  tests:
+    runs-on: ubuntu-latest
+    needs: [ruff, flake8, pylint]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y default-jre-headless nodejs npm chromium
+          npm install -g allure-commandline --unsafe-perm=true
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run tests
+        run: |
+          set +e
+          echo "Запуск UI тестов"
+          pytest -m ui --alluredir=allure-results
+
+          status=$?
+          echo "Pytest exit code $status"
+
+          echo "Генерация отчёта"
+          allure generate allure-results/ -o allure-report/ --single-file
+
+          exit $status
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results
+          path: allure-results/
+          retention-days: 7
+
+      - name: Upload allure report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report
+          path: allure-report/
+          retention-days: 7
+
+  final_job:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    needs: tests
+    steps:
+      - name: Print final message
+        run: echo "Пайплайн завершён"
