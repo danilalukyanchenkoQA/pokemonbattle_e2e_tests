@@ -69,6 +69,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ruff, flake8, pylint]
     if: always()
+    env:
+      LOGIN: ${{ secrets.LOGIN }}
+      PASSWORD: ${{ secrets.PASSWORD }}
+      POKEMONBATTLE_TOKEN: ${{ secrets.POKEMONBATTLE_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
